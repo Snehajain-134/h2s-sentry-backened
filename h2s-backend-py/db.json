@@ -1,0 +1,272 @@
+{
+  "users": [
+    {
+      "id": "WB-0942",
+      "password": "1234",
+      "role": "worker",
+      "workerId": "WB-0942"
+    },
+    {
+      "id": "WB-1187",
+      "password": "1234",
+      "role": "worker",
+      "workerId": "WB-1187"
+    },
+    {
+      "id": "WB-0655",
+      "password": "1234",
+      "role": "worker",
+      "workerId": "WB-0655"
+    },
+    {
+      "id": "WB-1340",
+      "password": "1234",
+      "role": "worker",
+      "workerId": "WB-1340"
+    },
+    {
+      "id": "WB-0821",
+      "password": "1234",
+      "role": "worker",
+      "workerId": "WB-0821"
+    },
+    {
+      "id": "SV-01",
+      "password": "1234",
+      "role": "supervisor",
+      "name": "Anita Behera",
+      "zones": [
+        "Shaft A \u00b7 Sector 1",
+        "Shaft B \u00b7 Sector 4",
+        "Shaft C \u00b7 Sector 2",
+        "Shaft D \u00b7 Sector 3"
+      ]
+    },
+    {
+      "id": "AD-01",
+      "password": "1234",
+      "role": "admin",
+      "name": "Site Admin"
+    }
+  ],
+  "workers": {
+    "WB-0942": {
+      "w_name": "Rajesh Nayak",
+      "gender": "M",
+      "age": 34,
+      "doj": "02 Jan 2026",
+      "zone": "Shaft B \u00b7 Sector 4",
+      "shift": "06:00\u201314:00",
+      "blood_group": "O+",
+      "latest_reading": {
+        "intake_level_ppm": 3.1,
+        "color_status": "Low",
+        "delta_e": 2.9,
+        "timestamp": "2026-09-01 09:30"
+      }
+    },
+    "WB-1187": {
+      "w_name": "Sunita Pradhan",
+      "gender": "F",
+      "age": 37,
+      "doj": "11 Nov 2025",
+      "zone": "Shaft A \u00b7 Sector 1",
+      "shift": "06:00\u201314:00",
+      "blood_group": "A+",
+      "latest_reading": {
+        "intake_level_ppm": 28.7,
+        "color_status": "High",
+        "delta_e": 20.0,
+        "timestamp": "2026-09-03 08:58"
+      }
+    },
+    "WB-0655": {
+      "w_name": "Manoj Sethi",
+      "gender": "M",
+      "age": 30,
+      "doj": "19 May 2025",
+      "zone": "Shaft C \u00b7 Sector 2",
+      "shift": "06:00\u201314:00",
+      "blood_group": "B+",
+      "latest_reading": {
+        "intake_level_ppm": 140.3,
+        "color_status": "High",
+        "delta_e": 63.1,
+        "timestamp": "2026-09-03 09:21"
+      }
+    },
+    "WB-1340": {
+      "w_name": "Debashish Rout",
+      "gender": "M",
+      "age": 35,
+      "doj": "30 Jun 2025",
+      "zone": "Shaft B \u00b7 Sector 4",
+      "shift": "06:00\u201314:00",
+      "blood_group": "AB+",
+      "latest_reading": {
+        "intake_level_ppm": 2.6,
+        "color_status": "Low",
+        "delta_e": 2.5,
+        "timestamp": "2026-09-01 09:30"
+      }
+    },
+    "WB-0821": {
+      "w_name": "Priya Mallick",
+      "gender": "F",
+      "age": 32,
+      "doj": "14 Feb 2026",
+      "zone": "Shaft A \u00b7 Sector 1",
+      "shift": "06:00\u201314:00",
+      "blood_group": "O-",
+      "latest_reading": {
+        "intake_level_ppm": 3.4,
+        "color_status": "Low",
+        "delta_e": 3.2,
+        "timestamp": "2026-09-01 09:30"
+      }
+    }
+  },
+  "sessions": {
+    "WB-0942": [
+      {
+        "entry_timestamp": "2026-08-26 06:03",
+        "exit_timestamp": "2026-08-26 14:03",
+        "duration_minutes": 480,
+        "max_ppm_in_shift": 3.1,
+        "overall_status": "Low",
+        "alert_triggered": "No",
+        "zone": "Shaft B \u00b7 Sector 4"
+      },
+      {
+        "entry_timestamp": "2026-08-19 06:05",
+        "exit_timestamp": "2026-08-19 14:05",
+        "duration_minutes": 480,
+        "max_ppm_in_shift": 2.8,
+        "overall_status": "Low",
+        "alert_triggered": "No",
+        "zone": "Shaft B \u00b7 Sector 4"
+      }
+    ],
+    "WB-0655": [
+      {
+        "entry_timestamp": "2026-09-03 08:58",
+        "exit_timestamp": "2026-09-03 09:21",
+        "duration_minutes": 23.1,
+        "max_ppm_in_shift": 140.3,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 06:02",
+        "exit_timestamp": "2026-09-03 08:56",
+        "duration_minutes": 175.0,
+        "max_ppm_in_shift": 26.7,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 05:50",
+        "exit_timestamp": "2026-09-03 06:02",
+        "duration_minutes": 12.5,
+        "max_ppm_in_shift": 9.9,
+        "overall_status": "Low",
+        "alert_triggered": "No",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 05:47",
+        "exit_timestamp": "2026-09-03 05:49",
+        "duration_minutes": 2.3,
+        "max_ppm_in_shift": 69.4,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 05:11",
+        "exit_timestamp": "2026-09-03 05:15",
+        "duration_minutes": 4.8,
+        "max_ppm_in_shift": 42.1,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 05:07",
+        "exit_timestamp": "2026-09-03 05:07",
+        "duration_minutes": 0.4,
+        "max_ppm_in_shift": 39.7,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 05:01",
+        "exit_timestamp": "2026-09-03 05:03",
+        "duration_minutes": 2.2,
+        "max_ppm_in_shift": 140.3,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 04:41",
+        "exit_timestamp": "2026-09-03 04:49",
+        "duration_minutes": 8.2,
+        "max_ppm_in_shift": 44.8,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-09-03 00:08",
+        "exit_timestamp": "2026-09-03 02:54",
+        "duration_minutes": 166.9,
+        "max_ppm_in_shift": 140.3,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-08-27 06:04",
+        "exit_timestamp": "2026-08-27 10:04",
+        "duration_minutes": 240,
+        "max_ppm_in_shift": 11.6,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft C \u00b7 Sector 2"
+      },
+      {
+        "entry_timestamp": "2026-08-20 06:10",
+        "exit_timestamp": "2026-08-20 14:10",
+        "duration_minutes": 480,
+        "max_ppm_in_shift": 6.2,
+        "overall_status": "Medium",
+        "alert_triggered": "No",
+        "zone": "Shaft C \u00b7 Sector 2"
+      }
+    ],
+    "WB-1187": [
+      {
+        "entry_timestamp": "2026-09-03 08:58",
+        "exit_timestamp": null,
+        "duration_minutes": null,
+        "max_ppm_in_shift": 28.7,
+        "overall_status": "High",
+        "alert_triggered": "Yes",
+        "zone": "Shaft A \u00b7 Sector 1"
+      },
+      {
+        "entry_timestamp": "2026-08-25 06:02",
+        "exit_timestamp": "2026-08-25 14:02",
+        "duration_minutes": 480,
+        "max_ppm_in_shift": 5.4,
+        "overall_status": "Medium",
+        "alert_triggered": "No",
+        "zone": "Shaft A \u00b7 Sector 1"
+      }
+    ]
+  }
+}

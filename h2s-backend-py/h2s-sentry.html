@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SulfaSense · H₂S Field Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<style>
+  :root{
+    --graphite:#F4F2EC;
+    --panel:#FFFFFF;
+    --panel-2:#ECEAE2;
+    --line:#DCD9CE;
+    --amber:#C97E14;
+    --amber-dim:#E3B472;
+    --low:#3E8A5D;
+    --med:#B87614;
+    --high:#C6392E;
+    --text:#20231F;
+    --text-dim:#5C6058;
+    --text-faint:#8B8F84;
+    --radius:2px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--graphite);
+    color:var(--text);
+    font-family:'Barlow', sans-serif;
+    min-height:100vh;
+    background-image:
+      linear-gradient(rgba(201,126,20,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,126,20,0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  h1,h2,h3,.display{font-family:'Barlow Condensed', sans-serif; text-transform:uppercase; letter-spacing:0.02em;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  button{font-family:inherit; cursor:pointer;}
+  input{font-family:inherit;}
+
+  /* ---------- BADGE (signature element) ---------- */
+  .badge{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--line);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  }
+  .badge::before{
+    content:'';
+    position:absolute;
+    top:0; right:0;
+    width:14px; height:14px;
+    border-left:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+
+  /* ---------- LOGIN ---------- */
+  #login-view{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-wrap{
+    width:100%;
+    max-width:380px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:34px;
+    justify-content:center;
+  }
+  .brand-mark{
+    width:34px; height:34px;
+    border:1.5px solid var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700; color:var(--amber);
+    font-size:13px;
+    transform:rotate(45deg);
+  }
+  .brand-mark span{transform:rotate(-45deg);}
+  .brand-name{font-size:26px; font-weight:700; letter-spacing:0.06em;}
+  .brand-sub{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.16em;
+    color:var(--text-faint);
+    margin-top:-30px;
+    margin-bottom:36px;
+    text-transform:uppercase;
+  }
+  .login-card{
+    padding:30px 26px 26px;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:7px;
+  }
+  .field input{
+    width:100%;
+    background:var(--graphite);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:11px 12px;
+    font-size:14.5px;
+    border-radius:var(--radius);
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--amber);}
+  .btn-primary{
+    width:100%;
+    background:var(--amber);
+    color:#1A1500;
+    border:none;
+    padding:12px;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    border-radius:var(--radius);
+    margin-top:6px;
+    transition:filter .15s;
+  }
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-primary:active{filter:brightness(0.94);}
+  .login-error{
+    color:var(--high);
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    margin-top:12px;
+    min-height:16px;
+  }
+  .login-hint{
+    margin-top:22px;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+  .login-hint b{color:var(--text-dim); font-family:'JetBrains Mono', monospace; font-weight:600;}
+
+  /* ---------- APP SHELL ---------- */
+  #app-view{display:none; min-height:100vh;}
+  .shell{display:flex; min-height:100vh;}
+  .sidebar{
+    width:220px;
+    flex-shrink:0;
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:22px 16px;
+    display:flex;
+    flex-direction:column;
+  }
+  .side-brand{
+    display:flex; align-items:center; gap:9px;
+    padding:0 6px 22px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .side-brand .brand-mark{width:26px; height:26px; font-size:10px;}
+  .side-brand .brand-name{font-size:17px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 10px;
+    color:var(--text-dim);
+    font-size:14px;
+    font-weight:500;
+    border-left:2px solid transparent;
+    border-radius:0 var(--radius) var(--radius) 0;
+    margin-bottom:2px;
+    transition:background .12s, color .12s;
+  }
+  .nav-item:hover{background:var(--panel-2); color:var(--text);}
+  .nav-item.active{
+    color:var(--amber);
+    border-left-color:var(--amber);
+    background:var(--panel-2);
+  }
+  .nav-dot{width:5px; height:5px; background:currentColor; border-radius:50%; flex-shrink:0;}
+  .side-foot{
+    margin-top:auto;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+  .who{
+    display:flex; align-items:center; gap:9px;
+    margin-bottom:12px;
+  }
+  .who-dot{
+    width:30px; height:30px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; font-weight:700;
+    color:var(--amber);
+    flex-shrink:0;
+  }
+  .who-name{font-size:13px; font-weight:600; line-height:1.2;}
+  .who-role{font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.08em;}
+  .logout-btn{
+    width:100%;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:8px;
+    font-size:12px;
+    border-radius:var(--radius);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .logout-btn:hover{border-color:var(--high); color:var(--high);}
+
+  .main{
+    flex:1;
+    padding:28px 34px 60px;
+    max-width:1100px;
+  }
+  .page-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .page-title{font-size:30px; font-weight:600;}
+  .page-time{font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint);}
+
+  /* KPI row */
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:12px;
+    margin-bottom:26px;
+  }
+  .kpi{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:14px 16px;
+    border-radius:var(--radius);
+  }
+  .kpi-label{font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint); margin-bottom:8px;}
+  .kpi-val{font-size:28px; font-weight:600; font-family:'Barlow Condensed', sans-serif;}
+  .kpi-val.low{color:var(--low);}
+  .kpi-val.med{color:var(--med);}
+  .kpi-val.high{color:var(--high);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:22px;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .panel-title{font-size:12px; font-family:'JetBrains Mono', monospace; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim);}
+  .panel-body{padding:6px 18px 14px;}
+
+  table{width:100%; border-collapse:collapse;}
+  th{
+    text-align:left;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    padding:10px 8px;
+    border-bottom:1px solid var(--line);
+    font-weight:500;
+  }
+  td{
+    padding:11px 8px;
+    font-size:13.5px;
+    border-bottom:1px solid rgba(58,62,55,0.5);
+  }
+  tr:last-child td{border-bottom:none;}
+  .pill{
+    display:inline-block;
+    padding:3px 9px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    border-radius:2px;
+    text-transform:uppercase;
+  }
+  .pill.low{background:rgba(95,166,121,0.15); color:var(--low); border:1px solid rgba(95,166,121,0.4);}
+  .pill.med{background:rgba(232,162,61,0.15); color:var(--med); border:1px solid rgba(232,162,61,0.4);}
+  .pill.high{background:rgba(217,72,60,0.15); color:var(--high); border:1px solid rgba(217,72,60,0.4);}
+  .link-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:5px 10px;
+    font-size:11.5px;
+    font-family:'JetBrains Mono', monospace;
+    border-radius:2px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .link-btn:hover{border-color:var(--amber); color:var(--amber);}
+  .empty-row{color:var(--text-faint); font-size:13px; text-align:center; padding:22px 0;}
+
+  /* profile card */
+  .profile-grid{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  .profile-badge{padding:20px; text-align:center;}
+  .profile-avatar{
+    width:64px; height:64px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    margin:0 auto 12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:700; color:var(--amber);
+    font-family:'Barlow Condensed', sans-serif;
+  }
+  .profile-name{font-size:18px; font-weight:600;}
+  .profile-id{font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); margin-top:3px;}
+  .kv-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px 20px;
+  }
+  .kv{}
+  .kv-label{font-family:'JetBrains Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-faint); margin-bottom:4px;}
+  .kv-val{font-size:14px; font-weight:500;}
+
+  /* scan flow */
+  .scan-stage{max-width:420px; margin:0 auto;}
+  .scan-step-label{
+    display:flex; align-items:center; gap:8px;
+    justify-content:center;
+    margin-bottom:20px;
+  }
+  .step-dot{
+    width:22px; height:22px;
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; color:var(--text-faint);
+    border-radius:50%;
+  }
+  .step-dot.done{border-color:var(--low); color:var(--low);}
+  .step-dot.now{border-color:var(--amber); color:var(--amber);}
+  .step-sep{width:26px; height:1px; background:var(--line);}
+
+  .scan-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:30px 26px;
+    border-radius:var(--radius);
+    text-align:center;
+  }
+  .barcode-box{
+    width:100%; aspect-ratio:4/3;
+    background:var(--graphite);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .barcode-box video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .barcode-box .frame{
+    width:62%; height:62%;
+    border:1.5px solid var(--amber);
+    border-radius:var(--radius);
+    position:relative;
+    z-index:2;
+    box-shadow:0 0 0 2000px rgba(24,27,26,0.28);
+  }
+  .barcode-box .frame::before, .barcode-box .frame::after,
+  .barcode-box .frame > .corner-br, .barcode-box .frame > .corner-bl{
+    content:''; position:absolute; width:16px; height:16px; border-color:var(--amber);
+  }
+  .barcode-box .frame::before{top:-1.5px; left:-1.5px; border-top:2.5px solid var(--amber); border-left:2.5px solid var(--amber);}
+  .barcode-box .frame::after{top:-1.5px; right:-1.5px; border-top:2.5px solid var(--amber); border-right:2.5px solid var(--amber);}
+  .barcode-box .corner-bl{bottom:-1.5px; left:-1.5px; border-bottom:2.5px solid var(--amber); border-left:2.5px solid var(--amber);}
+  .barcode-box .corner-br{bottom:-1.5px; right:-1.5px; border-bottom:2.5px solid var(--amber); border-right:2.5px solid var(--amber);}
+  .barcode-box.scanning::after{
+    content:'';
+    position:absolute; left:0; right:0; height:2px;
+    background:var(--amber);
+    top:0; z-index:3;
+    animation:scanline 1.3s linear infinite;
+    box-shadow:0 0 8px var(--amber);
+  }
+  .cam-box{
+    width:100%; aspect-ratio:4/3;
+    background:var(--graphite);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .cam-box video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+  }
+  .cam-box .swatch{
+    width:60px; height:60px;
+    border:1.5px solid var(--amber);
+    border-radius:50%;
+    position:relative;
+    z-index:2;
+    box-shadow:0 0 0 2000px rgba(24,27,26,0.28);
+  }
+  .cam-msg{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:16px;
+    font-size:12.5px; color:var(--text-faint);
+    font-family:'JetBrains Mono', monospace;
+  }
+  .cam-box.scanning::after{
+    content:'';
+    position:absolute; left:0; right:0; height:2px;
+    background:var(--amber);
+    top:0;
+    animation:scanline 1.2s linear infinite;
+    box-shadow:0 0 8px var(--amber);
+  }
+  @keyframes scanline{0%{top:0;} 100%{top:100%;}}
+
+  .result-pill-big{
+    display:inline-block;
+    padding:10px 26px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:20px;
+    letter-spacing:0.1em;
+    border-radius:2px;
+    margin:6px 0 4px;
+  }
+  .result-pill-big.low{background:rgba(95,166,121,0.15); color:var(--low); border:1px solid var(--low);}
+  .result-pill-big.med{background:rgba(232,162,61,0.15); color:var(--med); border:1px solid var(--med);}
+  .result-pill-big.high{background:rgba(217,72,60,0.15); color:var(--high); border:1px solid var(--high);}
+  .result-dose{font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint); margin-bottom:18px;}
+
+  .btn-row{display:flex; gap:10px; margin-top:8px;}
+  .btn-ghost{
+    flex:1;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    padding:11px;
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    border-radius:var(--radius);
+  }
+  .btn-ghost:hover{border-color:var(--text-dim); color:var(--text);}
+  .btn-amber{
+    flex:1;
+    background:var(--amber);
+    color:#1A1500;
+    border:none;
+    padding:11px;
+    font-weight:700;
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    border-radius:var(--radius);
+  }
+  .btn-amber:hover{filter:brightness(1.08);}
+
+  .scan-worker-strip{
+    display:flex; align-items:center; gap:12px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    padding:12px 14px;
+    border-radius:var(--radius);
+    margin-bottom:18px;
+    text-align:left;
+  }
+  .scan-worker-strip .who-dot{width:36px; height:36px; font-size:12px;}
+
+  /* modal */
+  .modal-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(10,11,10,0.72);
+    align-items:center; justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    max-width:480px; width:100%;
+    max-height:80vh;
+    overflow-y:auto;
+    border-radius:var(--radius);
+  }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal-close{
+    background:transparent; border:none; color:var(--text-faint);
+    font-size:20px; line-height:1;
+  }
+  .modal-close:hover{color:var(--text);}
+  .modal-body{padding:14px 18px 18px;}
+
+  .zone-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:12px;
+  }
+  .zone-card{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    padding:14px;
+    border-radius:var(--radius);
+  }
+  .zone-name{font-size:13px; font-weight:600; margin-bottom:8px;}
+  .zone-bar{height:5px; background:var(--graphite); border-radius:3px; overflow:hidden; margin-bottom:6px;}
+  .zone-bar-fill{height:100%;}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  @media (max-width:760px){
+    .shell{flex-direction:column;}
+    .sidebar{width:100%; flex-direction:row; align-items:center; padding:12px 16px; overflow-x:auto;}
+    .side-brand{display:none;}
+    .side-foot{display:none;}
+    .nav-item{white-space:nowrap;}
+    .main{padding:20px 16px 40px;}
+    .profile-grid{grid-template-columns:1fr;}
+    .kv-grid{grid-template-columns:1fr 1fr;}
+  }
+
+  :focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<!-- ======================= LOGIN ======================= -->
+<div id="login-view">
+  <div class="login-wrap">
+    <div class="brand">
+      <div class="brand-mark"><span>H₂S</span></div>
+      <div class="brand-name">SulfaSense</div>
+    </div>
+    <div class="brand-sub">Field exposure monitoring &middot; wristband colorimetric sensing</div>
+    <div class="badge login-card">
+      <div class="field">
+        <label for="login-id">ID</label>
+        <input id="login-id" type="text" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="login-pw">Password</label>
+        <input id="login-pw" type="password" placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" onclick="attemptLogin()">Log in</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= APP ======================= -->
+<div id="app-view">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="side-brand">
+        <div class="brand-mark"><span>H₂S</span></div>
+        <div class="brand-name">SulfaSense</div>
+      </div>
+      <div id="nav-items"></div>
+      <div class="side-foot">
+        <div class="who">
+          <div class="who-dot" id="who-initials">?</div>
+          <div>
+            <div class="who-name" id="who-name">—</div>
+            <div class="who-role" id="who-role">—</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Log out</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ---- WORKER: My Profile ---- -->
+      <div class="view" id="view-worker-profile">
+        <div class="page-head">
+          <div class="page-title">My Profile</div>
+        </div>
+        <div class="profile-grid">
+          <div class="badge profile-badge">
+            <div class="profile-avatar" id="w-initials">—</div>
+            <div class="profile-name" id="w-name">—</div>
+            <div class="profile-id mono" id="w-id">—</div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Today's status</div></div>
+              <div class="panel-body" style="padding-top:16px;">
+                <div class="kv-grid">
+                  <div class="kv"><div class="kv-label">Fit status</div><div class="kv-val" id="w-fit">—</div></div>
+                  <div class="kv"><div class="kv-label">Latest reading</div><div class="kv-val" id="w-latest">—</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">Enrollment details</div></div>
+              <div class="panel-body" style="padding-top:16px;">
+                <div class="kv-grid">
+                  <div class="kv"><div class="kv-label">Gender / Age</div><div class="kv-val" id="w-gender-age">—</div></div>
+                  <div class="kv"><div class="kv-label">Date of joining</div><div class="kv-val" id="w-doj">—</div></div>
+                  <div class="kv"><div class="kv-label">Zone</div><div class="kv-val" id="w-zone">—</div></div>
+                  <div class="kv"><div class="kv-label">Shift</div><div class="kv-val" id="w-shift">—</div></div>
+                  <div class="kv"><div class="kv-label">Wristband ID</div><div class="kv-val mono" id="w-band">—</div></div>
+                  <div class="kv"><div class="kv-label">Blood group</div><div class="kv-val" id="w-blood">—</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- WORKER: My History ---- -->
+      <div class="view" id="view-worker-history">
+        <div class="page-head">
+          <div class="page-title">My Shift History</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Entry / Exit sessions</div></div>
+          <div class="panel-body">
+            <table>
+              <thead><tr><th>Entry</th><th>Exit</th><th>Duration</th><th>Max ppm</th><th>Status</th><th>Alert</th></tr></thead>
+              <tbody id="w-history-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- SUPERVISOR / ADMIN: Overview ---- -->
+      <div class="view" id="view-overview">
+        <div class="page-head">
+          <div class="page-title" id="overview-title">Zone Dashboard</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Zones</div></div>
+          <div class="panel-body" style="padding-top:14px; padding-bottom:16px;">
+            <div class="zone-grid" id="zone-grid"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Workers</div>
+            <button class="link-btn" onclick="goto('scan')">+ New scan</button>
+          </div>
+          <div class="panel-body">
+            <table>
+              <thead><tr><th>Worker</th><th>ID</th><th>Zone</th><th>Fit status</th><th>Latest reading</th><th></th></tr></thead>
+              <tbody id="overview-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- SCAN FLOW ---- -->
+      <div class="view" id="view-scan">
+        <div class="page-head"><div class="page-title">New Scan</div></div>
+        <div class="scan-stage">
+          <div class="scan-step-label mono">
+            <div class="step-dot" id="sd-1">1</div>
+            <div class="step-sep"></div>
+            <div class="step-dot" id="sd-2">2</div>
+            <div class="step-sep"></div>
+            <div class="step-dot" id="sd-3">3</div>
+          </div>
+
+          <!-- step 1: barcode / QR scan (camera opens automatically) -->
+          <div id="scan-step-id">
+            <div class="scan-card">
+              <div class="eyebrow" style="margin-bottom:10px;">Wristband</div>
+              <div style="font-weight:600; margin-bottom:14px;">Point the camera at the band's barcode/QR</div>
+              <div class="barcode-box" id="barcode-box">
+                <video id="barcode-video" autoplay playsinline muted></video>
+                <div class="frame" id="barcode-frame" style="display:none;"><span class="corner-bl"></span><span class="corner-br"></span></div>
+              </div>
+              <canvas id="barcode-canvas" style="display:none;"></canvas>
+              <div id="wristband-error" style="color:var(--high); font-family:'JetBrains Mono', monospace; font-size:12px; min-height:16px;"></div>
+
+              <div style="margin-top:6px;">
+                <span class="link-btn" style="font-size:12px;" onclick="toggleManualEntry()" id="manual-toggle-link">Type the ID instead</span>
+              </div>
+              <div id="manual-entry-block" style="display:none; margin-top:12px; padding-top:14px; border-top:1px dashed var(--line);">
+                <div class="field" style="text-align:left;">
+                  <input id="wristband-input" type="text" placeholder="e.g. WB-0942" style="width:100%; background:var(--graphite); border:1px solid var(--line); color:var(--text); padding:11px 12px; font-size:14.5px; border-radius:var(--radius); text-align:center;" autocomplete="off">
+                </div>
+                <button class="btn-amber" style="width:100%; margin-top:10px;" onclick="lookupWristband(document.getElementById('wristband-input').value.trim())">Find worker</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- step 2: camera -->
+          <div id="scan-step-camera" style="display:none;">
+            <div class="scan-worker-strip">
+              <div class="who-dot" id="scan-w-initials">—</div>
+              <div>
+                <div style="font-weight:600; font-size:13.5px;" id="scan-w-name">—</div>
+                <div class="mono" style="font-size:11px; color:var(--text-faint);" id="scan-w-id">—</div>
+              </div>
+            </div>
+            <div class="scan-card">
+              <div class="cam-box" id="cam-box">
+                <video id="cam-video" autoplay playsinline muted></video>
+                <div class="swatch" id="cam-swatch" style="display:none;"></div>
+              </div>
+              <canvas id="cam-canvas" style="display:none;"></canvas>
+              <div style="font-weight:600; margin-bottom:20px;">Align sensor patch in frame</div>
+              <button class="btn-amber" style="width:100%;" onclick="captureAndAnalyze()" id="capture-btn">Capture &amp; analyze</button>
+            </div>
+          </div>
+
+          <!-- step 3: result -->
+          <div id="scan-step-result" style="display:none;">
+            <div class="scan-worker-strip">
+              <div class="who-dot" id="res-w-initials">—</div>
+              <div>
+                <div style="font-weight:600; font-size:13.5px;" id="res-w-name">—</div>
+                <div class="mono" style="font-size:11px; color:var(--text-faint);" id="res-w-id">—</div>
+              </div>
+            </div>
+            <div class="scan-card">
+              <div class="eyebrow" style="margin-bottom:8px;" id="result-scan-type">—</div>
+              <div class="result-pill-big" id="result-pill">—</div>
+              <div class="result-dose" id="result-dose">—</div>
+              <div class="result-dose" id="result-fit" style="margin-bottom:18px;">—</div>
+              <button class="btn-amber" style="width:100%;" onclick="resetScan()">Scan another</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- history modal (supervisor/admin) -->
+<div class="modal-backdrop" id="history-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div style="font-weight:600;" id="hm-name">—</div>
+        <div class="mono" style="font-size:11px; color:var(--text-faint);" id="hm-id">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table>
+        <thead><tr><th>Entry</th><th>Exit</th><th>Duration</th><th>Max ppm</th><th>Status</th><th>Alert</th></tr></thead>
+        <tbody id="hm-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ BACKEND CONNECTION ============ */
+const API_BASE = '';
+
+async function api(path, options = {}){
+  const token = localStorage.getItem('h2s_token');
+  const headers = Object.assign({'Content-Type':'application/json'}, options.headers || {});
+  if(token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API_BASE + path, Object.assign({}, options, {headers}));
+  let data = {};
+  try { data = await res.json(); } catch(e){}
+  if(!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+  return data;
+}
+
+/* ============ STATE ============ */
+let session = null;
+let scanWristbandId = null;
+let scanWorker = null;
+let cache = { workers: [] };
+
+/* ============ LOGIN ============ */
+async function attemptLogin(){
+  const id = document.getElementById('login-id').value.trim().toUpperCase();
+  const pw = document.getElementById('login-pw').value;
+  const err = document.getElementById('login-error');
+  const btn = document.querySelector('.btn-primary');
+  err.textContent = '';
+  btn.textContent = 'Connecting…';
+  btn.disabled = true;
+  try{
+    const data = await api('/api/login', { method: 'POST', body: JSON.stringify({id, password: pw}) });
+    session = data; // {token, role, id, name, zone}
+    localStorage.setItem('h2s_token', data.token);
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app-view').style.display = 'block';
+    buildNav();
+    goto(session.role === 'worker' ? 'worker-profile' : 'overview');
+  } catch(e){
+    err.textContent = e.message.includes('fetch')
+      ? 'Cannot reach the backend — make sure it is running (python server.py) on ' + API_BASE
+      : e.message;
+  } finally {
+    btn.textContent = 'Log in';
+    btn.disabled = false;
+  }
+}
+
+function logout(){
+  session = null;
+  localStorage.removeItem('h2s_token');
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('app-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+}
+
+document.getElementById('login-pw').addEventListener('keydown', e => { if(e.key === 'Enter') attemptLogin(); });
+
+/* ============ NAV ============ */
+const NAV_BY_ROLE = {
+  worker: [ {key:'worker-profile', label:'My Profile'}, {key:'worker-history', label:'My History'} ],
+  supervisor: [ {key:'overview', label:'Dashboard'}, {key:'scan', label:'New Scan'} ],
+  admin: [ {key:'overview', label:'Dashboard'}, {key:'scan', label:'New Scan'} ]
+};
+
+function buildNav(){
+  const wrap = document.getElementById('nav-items');
+  wrap.innerHTML = '';
+  NAV_BY_ROLE[session.role].forEach(item => {
+    const d = document.createElement('div');
+    d.className = 'nav-item';
+    d.id = 'nav-' + item.key;
+    d.innerHTML = '<span class="nav-dot"></span>' + item.label;
+    d.onclick = () => goto(item.key);
+    wrap.appendChild(d);
+  });
+  document.getElementById('who-initials').textContent = initials(session.name);
+  document.getElementById('who-name').textContent = session.name;
+  document.getElementById('who-role').textContent = session.role;
+}
+
+function initials(name){ return name.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(); }
+
+function goto(key){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + key);
+  if(navEl) navEl.classList.add('active');
+
+  if(key === 'worker-profile'){ renderWorkerProfile(); document.getElementById('view-worker-profile').classList.add('active'); }
+  else if(key === 'worker-history'){ renderWorkerHistory(); document.getElementById('view-worker-history').classList.add('active'); }
+  else if(key === 'overview'){ renderOverview(); document.getElementById('view-overview').classList.add('active'); }
+  else if(key === 'scan'){ resetScan(); document.getElementById('view-scan').classList.add('active'); }
+}
+
+function showLoadError(viewId, e){
+  const view = document.getElementById(viewId);
+  view.innerHTML = `<div class="panel"><div class="panel-body" style="padding-top:16px; color:var(--high); font-size:13.5px;">
+    Could not load this from the backend: ${e.message}<br>
+    <span style="color:var(--text-faint);">Make sure the server is running (python server.py) at ${API_BASE}.</span>
+  </div></div>`;
+}
+
+function fmtReading(r){
+  if(!r) return 'No readings yet';
+  return `${r.intake_level_ppm} ppm · ${r.color_status}`;
+}
+
+/* ============ WORKER VIEWS ============ */
+async function renderWorkerProfile(){
+  let w;
+  try{ w = await api('/api/worker/' + session.id); } catch(e){ return showLoadError('view-worker-profile', e); }
+  document.getElementById('w-initials').textContent = initials(w.w_name);
+  document.getElementById('w-name').textContent = w.w_name;
+  document.getElementById('w-id').textContent = w.w_id;
+  document.getElementById('w-fit').textContent = w.fit_status;
+  document.getElementById('w-latest').textContent = fmtReading(w.latest_reading);
+  document.getElementById('w-gender-age').textContent = `${w.gender} · ${w.age} yrs`;
+  document.getElementById('w-doj').textContent = w.doj;
+  document.getElementById('w-zone').textContent = w.zone;
+  document.getElementById('w-shift').textContent = w.shift;
+  document.getElementById('w-band').textContent = w.wristband_id;
+  document.getElementById('w-blood').textContent = w.blood_group;
+}
+
+async function renderWorkerHistory(){
+  let data;
+  try{ data = await api('/api/history/' + session.id); } catch(e){ return showLoadError('view-worker-history', e); }
+  const rows = data.sessions || [];
+  const body = document.getElementById('w-history-body');
+  body.innerHTML = '';
+  if(rows.length === 0){
+    body.innerHTML = '<tr><td colspan="6" class="empty-row">No shift sessions recorded yet.</td></tr>';
+    return;
+  }
+  rows.forEach(s => { body.innerHTML += sessionRow(s); });
+}
+
+function sessionRow(s){
+  const stage = (s.overall_status || 'Low').toLowerCase().replace('medium','med');
+  return `<tr>
+    <td class="mono">${s.entry_timestamp || '—'}</td>
+    <td class="mono">${s.exit_timestamp || '<span style="color:var(--amber);">open</span>'}</td>
+    <td class="mono">${s.duration_minutes != null ? s.duration_minutes + ' min' : '—'}</td>
+    <td class="mono">${s.max_ppm_in_shift != null ? s.max_ppm_in_shift : '—'}</td>
+    <td><span class="pill ${stage}">${s.overall_status || '—'}</span></td>
+    <td style="color:${s.alert_triggered === 'Yes' ? 'var(--high)' : 'var(--text-faint)'}; font-size:12.5px;">${s.alert_triggered || 'No'}</td>
+  </tr>`;
+}
+
+/* ============ OVERVIEW (supervisor + admin) ============ */
+async function renderOverview(){
+  document.getElementById('overview-title').textContent = session.role === 'admin' ? 'Zone Dashboard — Admin' : 'Zone Dashboard';
+
+  let workersData, zonesData;
+  try{
+    [workersData, zonesData] = await Promise.all([ api('/api/workers'), api('/api/zones') ]);
+  } catch(e){ return showLoadError('view-overview', e); }
+
+  cache.workers = workersData.workers;
+
+  const zoneGrid = document.getElementById('zone-grid');
+  zoneGrid.innerHTML = '';
+  zonesData.zones.forEach(z => {
+    const stage = z.worst_status.toLowerCase().replace('medium','med');
+    zoneGrid.innerHTML += `<div class="zone-card">
+      <div class="zone-name">${z.zone}</div>
+      <div style="font-size:12px; color:var(--text-faint); margin-bottom:8px;">${z.worker_count} workers on roster</div>
+      <span class="pill ${stage}">${z.worst_status}</span>
+    </div>`;
+  });
+
+  const rankOf = s => ({Low:0, Medium:1, High:2}[s] ?? 0);
+  const body = document.getElementById('overview-body');
+  body.innerHTML = '';
+  if(cache.workers.length === 0){
+    body.innerHTML = '<tr><td colspan="6" class="empty-row">No workers in your managed zones.</td></tr>';
+    return;
+  }
+  cache.workers
+    .slice()
+    .sort((a,b) => rankOf(b.latest_reading ? b.latest_reading.color_status : 'Low') - rankOf(a.latest_reading ? a.latest_reading.color_status : 'Low'))
+    .forEach(w => {
+      const stage = (w.latest_reading ? w.latest_reading.color_status : null);
+      const pill = stage ? `<span class="pill ${stage.toLowerCase().replace('medium','med')}">${stage}</span>` : '<span style="color:var(--text-faint); font-size:12.5px;">No reading</span>';
+      body.innerHTML += `<tr>
+        <td>${w.w_name}</td>
+        <td class="mono">${w.w_id}</td>
+        <td>${w.zone}</td>
+        <td style="color:${w.fit_status === 'Fit' ? 'var(--low)' : 'var(--high)'};">${w.fit_status}</td>
+        <td>${pill}</td>
+        <td><button class="link-btn" onclick="openHistory('${w.w_id}')">History</button></td>
+      </tr>`;
+    });
+}
+
+/* ============ HISTORY MODAL ============ */
+async function openHistory(w_id){
+  const w = cache.workers.find(x => x.w_id === w_id) || {w_name: w_id};
+  document.getElementById('hm-name').textContent = w.w_name;
+  document.getElementById('hm-id').textContent = w_id;
+  const body = document.getElementById('hm-body');
+  body.innerHTML = '<tr><td colspan="6" class="empty-row">Loading…</td></tr>';
+  document.getElementById('history-modal').classList.add('show');
+  try{
+    const data = await api('/api/history/' + w_id);
+    body.innerHTML = (data.sessions || []).map(sessionRow).join('') || '<tr><td colspan="6" class="empty-row">No sessions yet.</td></tr>';
+  } catch(e){
+    body.innerHTML = `<tr><td colspan="6" class="empty-row" style="color:var(--high);">Could not load: ${e.message}</td></tr>`;
+  }
+}
+function closeModal(){ document.getElementById('history-modal').classList.remove('show'); }
+document.getElementById('history-modal').addEventListener('click', e => { if(e.target.id === 'history-modal') closeModal(); });
+
+/* ============ SCAN FLOW ============ */
+function resetScan(){
+  scanWristbandId = null;
+  scanWorker = null;
+  stopCamera();
+  stopBarcodeScan();
+  document.getElementById('wristband-input').value = '';
+  document.getElementById('wristband-error').textContent = '';
+  document.getElementById('manual-entry-block').style.display = 'none';
+  document.getElementById('manual-toggle-link').textContent = 'Type the ID instead';
+  document.getElementById('scan-step-id').style.display = 'block';
+  document.getElementById('scan-step-camera').style.display = 'none';
+  document.getElementById('scan-step-result').style.display = 'none';
+  setStepDots(1);
+  startBarcodeScan(); // camera opens automatically, no extra click needed
+}
+
+function toggleManualEntry(){
+  const block = document.getElementById('manual-entry-block');
+  const link = document.getElementById('manual-toggle-link');
+  const showing = block.style.display !== 'none';
+  block.style.display = showing ? 'none' : 'block';
+  link.textContent = showing ? 'Type the ID instead' : 'Use the camera instead';
+}
+
+function setStepDots(active){
+  [1,2,3].forEach(n => {
+    const d = document.getElementById('sd-' + n);
+    d.classList.remove('done','now');
+    if(n < active) d.classList.add('done');
+    if(n === active) d.classList.add('now');
+  });
+}
+
+async function lookupWristband(id){
+  const err = document.getElementById('wristband-error');
+  err.textContent = '';
+  if(!id){ err.textContent = 'Enter or scan a wristband ID.'; return; }
+  try{
+    const w = await api('/api/wristband/' + encodeURIComponent(id));
+    scanWristbandId = id;
+    scanWorker = w;
+    stopBarcodeScan();
+    document.getElementById('scan-w-initials').textContent = initials(w.w_name);
+    document.getElementById('scan-w-name').textContent = w.w_name;
+    document.getElementById('scan-w-id').textContent = w.w_id + ' · ' + w.zone;
+    document.getElementById('scan-step-id').style.display = 'none';
+    document.getElementById('scan-step-camera').style.display = 'block';
+    setStepDots(2);
+    startCamera();
+  } catch(e){
+    err.textContent = e.message;
+    if(barcodeStream){ // keep scanning if the camera is still running
+      err.textContent += ' — still scanning, try again.';
+      barcodeLoopId = requestAnimationFrame(barcodeScanLoop);
+    }
+  }
+}
+
+/* ---- barcode / QR scanning (step 1) ---- */
+let barcodeStream = null;
+let barcodeLoopId = null;
+
+async function startBarcodeScan(){
+  const box = document.getElementById('barcode-box');
+  const video = document.getElementById('barcode-video');
+  const frame = document.getElementById('barcode-frame');
+  const err = document.getElementById('wristband-error');
+  const existingMsg = box.querySelector('.cam-msg');
+  if(existingMsg) existingMsg.remove();
+  err.textContent = '';
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    box.insertAdjacentHTML('beforeend', '<div class="cam-msg">Camera API not available in this browser context.<br>Open this page over http://localhost or https:// (not by double-clicking the file) to allow camera access.</div>');
+    return;
+  }
+  try{
+    barcodeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = barcodeStream;
+    frame.style.display = 'block';
+    box.classList.add('scanning');
+    barcodeScanLoop();
+  } catch(e){
+    box.insertAdjacentHTML('beforeend', `<div class="cam-msg">Camera permission was blocked or unavailable (${e.name}).<br>Allow camera access, or enter the ID manually below.</div>`);
+  }
+}
+
+function stopBarcodeScan(){
+  if(barcodeLoopId) cancelAnimationFrame(barcodeLoopId);
+  barcodeLoopId = null;
+  if(barcodeStream){ barcodeStream.getTracks().forEach(t => t.stop()); barcodeStream = null; }
+  const box = document.getElementById('barcode-box');
+  if(box) box.classList.remove('scanning');
+  const frame = document.getElementById('barcode-frame');
+  if(frame) frame.style.display = 'none';
+}
+
+function barcodeScanLoop(){
+  const video = document.getElementById('barcode-video');
+  const canvas = document.getElementById('barcode-canvas');
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    if(code && code.data){
+      lookupWristband(code.data.trim());
+      return; // stop the loop — a worker was found (or lookupWristband will show the error)
+    }
+  }
+  barcodeLoopId = requestAnimationFrame(barcodeScanLoop);
+}
+
+/* ---- real camera ---- */
+let camStream = null;
+
+async function startCamera(){
+  const box = document.getElementById('cam-box');
+  const video = document.getElementById('cam-video');
+  const swatch = document.getElementById('cam-swatch');
+  const existingMsg = box.querySelector('.cam-msg');
+  if(existingMsg) existingMsg.remove();
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    box.insertAdjacentHTML('beforeend', '<div class="cam-msg">Camera API not available in this browser context.<br>Open this page over http://localhost or https:// (not by double-clicking the file) to allow camera access.</div>');
+    return;
+  }
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = camStream;
+    swatch.style.display = 'block';
+  } catch(e){
+    box.insertAdjacentHTML('beforeend', `<div class="cam-msg">Camera permission was blocked or unavailable (${e.name}).<br>Allow camera access for this page and try again.</div>`);
+  }
+}
+
+function stopCamera(){
+  if(camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  const box = document.getElementById('cam-box');
+  const msg = box && box.querySelector('.cam-msg');
+  if(msg) msg.remove();
+  const swatch = document.getElementById('cam-swatch');
+  if(swatch) swatch.style.display = 'none';
+}
+
+async function captureAndAnalyze(){
+  const video = document.getElementById('cam-video');
+  const canvas = document.getElementById('cam-canvas');
+  const box = document.getElementById('cam-box');
+  const btn = document.getElementById('capture-btn');
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if(!vw || !vh){ alert('Camera is not ready yet — wait a second and try again.'); return; }
+
+  canvas.width = vw; canvas.height = vh;
+  canvas.getContext('2d').drawImage(video, 0, 0, vw, vh);
+  const imageBase64 = canvas.toDataURL('image/png');
+
+  box.classList.add('scanning');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+
+  try{
+    const result = await api('/api/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ wristband_id: scanWristbandId, image_base64: imageBase64 })
+    });
+    stopCamera();
+    box.classList.remove('scanning');
+    btn.disabled = false;
+    btn.textContent = 'Capture & analyze';
+
+    document.getElementById('res-w-initials').textContent = initials(result.w_name);
+    document.getElementById('res-w-name').textContent = result.w_name;
+    document.getElementById('res-w-id').textContent = result.w_id + ' · ' + result.zone;
+    document.getElementById('result-scan-type').textContent = result.scan_type + ' scan logged';
+
+    const stage = result.color_status.toLowerCase().replace('medium','med');
+    const pill = document.getElementById('result-pill');
+    pill.className = 'result-pill-big ' + stage;
+    pill.textContent = result.color_status;
+    document.getElementById('result-dose').textContent = `Estimated intake · ${result.intake_level_ppm} ppm (ΔE ${result.delta_e})`;
+    document.getElementById('result-fit').textContent = result.fit_status;
+
+    document.getElementById('scan-step-camera').style.display = 'none';
+    document.getElementById('scan-step-result').style.display = 'block';
+    setStepDots(3);
+  } catch(e){
+    box.classList.remove('scanning');
+    btn.disabled = false;
+    btn.textContent = 'Capture & analyze';
+    alert('Could not analyze this scan: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
