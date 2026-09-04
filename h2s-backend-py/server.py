@@ -350,7 +350,9 @@ def analyze():
         "scan_type": scan_type, "color_status": color_status,
         "intake_level_ppm": ppm, "delta_e": dE, "fit_status": fit_status,
     })
-
+@app.route("/")
+def serve_frontend():
+     return send_from_directory(os.path.dirname(__file__), "h2s-sentry.html")
 if __name__ == "__main__":
    port = int(os.environ.get("PORT", 5000)) 
    app.run(debug=False, host="0.0.0.0", port=port)
