@@ -228,14 +228,15 @@ def login():
 @require_auth
 @require_role("supervisor", "admin") 
 
+@app.route("/api/wristband/<w_id>", methods=["GET"])
+@require_auth
+@require_role("supervisor", "admin")
 def get_by_wristband(w_id):
-    db = read_db() w = db["workers"].get(w_id)
-     if not w:
-         return jsonify({"error": f"No worker registered to wristband {w_id}"}), 404 
-     record_role = w.get("role", "Worker")
-     if record_role != "Worker" and request.user["role"] != "admin": 
-         return jsonify({"error": "Supervisors can only look up worker IDs, not other supervisors or admins"}), 403
- return jsonify(worker_payload(w_id, w))
+    db = read_db()
+    w = db["workers"].get(w_id)
+    if not w:
+        return jsonify({"error": f"No worker registered to wristband {w_id}"}), 404
+    return jsonify(worker_payload(w_id, w))
      
 @app.route("/api/me", methods=["GET"])
 @require_auth
