@@ -6,7 +6,7 @@
 <title>SulfaSense · H₂S Field Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
     --graphite:#F4F2EC;
@@ -1086,6 +1086,10 @@ async function startBarcodeScan(){
   if(existingMsg) existingMsg.remove();
   err.textContent = '';
 
+  if(typeof jsQR === 'undefined'){
+    box.insertAdjacentHTML('beforeend', '<div class="cam-msg">Scanner library failed to load (check internet connection, then reload this page). You can still enter the ID manually below.</div>');
+    return;
+  }
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
     box.insertAdjacentHTML('beforeend', '<div class="cam-msg">Camera API not available in this browser context.<br>Open this page over http://localhost or https:// (not by double-clicking the file) to allow camera access.</div>');
     return;
@@ -1119,10 +1123,14 @@ function barcodeScanLoop(){
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imgData.data, imgData.width, imgData.height);
-    if(code && code.data){
-      lookupWristband(code.data.trim());
-      return; // stop the loop — a worker was found (or lookupWristband will show the error)
+    try{
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if(code && code.data){
+        lookupWristband(code.data.trim());
+        return; // stop the loop — a worker was found (or lookupWristband will show the error)
+      }
+    } catch(e){
+      console.error('jsQR decode error:', e);
     }
   }
   barcodeLoopId = requestAnimationFrame(barcodeScanLoop);
