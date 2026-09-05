@@ -224,9 +224,6 @@ def login():
     token = sign_token(user)
     return jsonify({"token": token, "role": user["role"], "name": name,
                      "workerId": user.get("workerId"), "id": user["id"]})
-@app.route("/api/wristband/<w_id>", methods=["GET"])
-@require_auth
-@require_role("supervisor", "admin") 
      
 @app.route("/api/me", methods=["GET"])
 @require_auth
